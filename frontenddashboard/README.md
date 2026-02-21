@@ -1,16 +1,138 @@
-# React + Vite
+# Sales Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React dashboard for viewing and uploading sales data, with data tables, filters, search, and charts. Built with **Vite**, **React**, **MUI**, **Redux Toolkit**, and **Recharts**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Prerequisites
 
-## React Compiler
+- **Node.js** (v18 or later recommended)
+- **npm** (or yarn / pnpm)
+- **Backend API** running on `http://localhost:3000` (see [API](#api) section)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Start the backend API
+
+Ensure your backend is running on **port 3000** and exposes:
+
+- `GET http://localhost:3000/api/getsales` — returns sales data
+- `POST http://localhost:3000/api/upload` — accepts file upload with form key **`file`**
+
+### 3. Run the frontend
+
+```bash
+npm run dev
+```
+
+Then open the URL shown in the terminal (e.g. `http://localhost:5173`).
+
+### 4. Build for production
+
+```bash
+npm run build
+```
+
+Output is in the `dist/` folder. To preview the production build locally:
+
+```bash
+npm run preview
+```
+
+---
+
+## API
+
+The app talks to your backend via a Vite proxy: requests to `/api/*` are forwarded to `http://localhost:3000`.
+
+| Method | Path        | Description                          |
+|--------|-------------|--------------------------------------|
+| GET    | `/api/getsales` | Fetch all sales data (array or `{ data: [] }`) |
+| POST   | `/api/upload`   | Upload CSV/Excel; form field name must be **`file`** |
+
+### Expected data shape (for charts and table)
+
+Each sales record can use any of these field names (snake_case or camelCase):
+
+- **Product:** `product_name`, `productName`, `Product Name`, `Product`
+- **Category:** `category`, `Category`
+- **Rating:** `rating`, `Rating`, `average_rating` (number, e.g. 0–5)
+- **Reviews:** `review_count`, `reviewCount`, `reviews`, `Reviews`, `num_reviews` (number)
+- **Discount:** `discount`, `Discount`, `discount_percentage`, `Discount Percentage` (number, e.g. 0–100)
+
+If your API uses different names, update `src/utils/dataNormalizer.js`.
+
+---
+
+## Features
+
+- **File upload** — CSV or Excel (.xlsx, .xls), max 10 MB; validation and loading/error/success messages
+- **Data table** — Pagination (5 / 10 / 25 / 50), sort by columns
+- **Filters** — Category dropdown; Review filter (All / Has reviews / No reviews)
+- **Search** — By product name (client-side on loaded data)
+- **Charts (Recharts)**  
+  - Products per category (horizontal bar)  
+  - Top reviewed products (bar)  
+  - Discount distribution (histogram)  
+  - Category-wise average rating (bar)
+- **State** — Redux Toolkit + RTK Query for API calls and cache
+- **UI** — MUI theme, loading states, and basic error handling
+
+---
+
+## Project structure
+
+```
+frontenddashboard/
+├── public/
+├── src/
+│   ├── components/
+│   │   ├── charts/           # Recharts components
+│   │   ├── ChartsSection.jsx
+│   │   ├── FileUpload.jsx
+│   │   └── SalesTable.jsx
+│   ├── store/
+│   │   ├── salesApi.js       # RTK Query (getSales, upload)
+│   │   └── store.js
+│   ├── utils/
+│   │   └── dataNormalizer.js # Normalize API rows for UI
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── index.css
+├── index.html
+├── package.json
+├── vite.config.js           # Proxy /api → localhost:3000
+└── README.md
+```
+
+---
+
+## Scripts
+
+| Command         | Description                |
+|----------------|----------------------------|
+| `npm run dev`  | Start dev server (Vite)     |
+| `npm run build`| Production build → `dist/`  |
+| `npm run preview` | Serve `dist/` locally   |
+| `npm run lint` | Run ESLint                 |
+
+---
+
+## Troubleshooting
+
+- **Charts/table empty or “Failed to load”**  
+  Check that the backend is running on port 3000 and that `GET /api/getsales` returns valid JSON (array or `{ data: [...] }`).
+
+- **Upload fails**  
+  Confirm the upload endpoint expects the file in a field named **`file`** and that CORS allows requests from your dev origin (e.g. `http://localhost:5173`). The Vite proxy sends requests from the same origin, so CORS is usually not an issue in dev.
+
+- **Wrong columns in table/charts**  
+  Adjust `src/utils/dataNormalizer.js` to match your API field names.
